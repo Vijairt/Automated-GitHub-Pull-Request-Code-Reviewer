@@ -5,27 +5,25 @@ from pydantic import BaseModel, Field
 
 
 class Severity(str, Enum):
-    INFO = "info"
-    WARNING = "warning"
-    CRITICAL = "critical"
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+    @property
+    def rank(self) -> int:
+        return ["low", "medium", "high"].index(self.value)
 
 
-class Category(str, Enum):
-    DOCUMENTATION = "documentation"
-    BUG = "bug"
-    SECURITY = "security"
-    STYLE = "style"
+class Finding(BaseModel):
+    file_path: str = Field(description="File path exactly as shown in the diff header")
+    line_number: int = Field(description="Line number in the NEW version of the file", ge=1)
+    severity: Severity = Field(
+        description="high: logic bug, unhandled exception, or security risk; "
+        "medium: likely problem; low: minor"
+    )
+    issue: str = Field(description="One or two sentences describing the problem")
+    suggestion: Optional[str] = Field(default=None, description="Concrete fix")
 
 
-class ReviewComment(BaseModel):
-    path: str = Field(description="File path exactly as shown in the diff")
-    line: int = Field(description="Line number in the NEW version of the file", ge=1)
-    category: Category
-    severity: Severity
-    message: str = Field(description="Concise explanation of the issue")
-    suggestion: Optional[str] = Field(default=None, description="Suggested fix")
-
-
-class ReviewResult(BaseModel):
-    summary: str = Field(description="2-3 sentence overall assessment")
-    comments: List[ReviewComment] = Field(default_factory=list)
+class FileReview(BaseModel):
+    findings: List[Finding] = Field(default_factory=list)
