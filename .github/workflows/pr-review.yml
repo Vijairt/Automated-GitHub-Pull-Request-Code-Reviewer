@@ -1,0 +1,29 @@
+name: AI PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: "Automated GitHub Pull Request & Code Reviewer/requirements.txt"
+      - name: Install dependencies
+        run: pip install -r "Automated GitHub Pull Request & Code Reviewer/requirements.txt"
+      - name: Run reviewer
+        working-directory: "Automated GitHub Pull Request & Code Reviewer"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: python -m pr_reviewer.main
